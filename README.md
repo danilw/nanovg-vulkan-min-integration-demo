@@ -16,7 +16,9 @@ ___
 
 As an example of render pass I use my own "single triangle" example Vulkan code from [vulkan-shader-launcher](https://github.com/danilw/vulkan-shader-launcher) (example_minimal there)
 
-*Platform supported* - Windows and Linux (X11/Wayland).
+*Platform supported* - Windows and Linux (X11/Wayland). 
+
+To build Wayland set `USE_WAYLAND_LINUX` to `ON` in `example_minimal_nanovg/CMakeLists.txt` file.
 
 # Build:
 
