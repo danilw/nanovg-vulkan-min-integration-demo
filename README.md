@@ -9,7 +9,7 @@ ___
 
 *What you need to do for NanoVG integration* - call `init_nanovg_vulkan(...)` after your full Vulkan initialization, and copy-paste NanoVG render pass after end of your render pass `vkCmdEndRenderPass`.
 
-**[This commit](https://github.com/danilw/nanovg-vulkan-min-integration-demo/commit/11e4dceb1acb1b31c19c3c16c7f365f47a42184d) shows NanoVG render pass integration**.
+### [This commit](https://github.com/danilw/nanovg-vulkan-min-integration-demo/commit/11e4dceb1acb1b31c19c3c16c7f365f47a42184d) shows NanoVG render pass integration
 
 Can be copy-pasted to any other render pass. (or compare `main.c` to `main_original.c`)
 ___
