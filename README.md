@@ -33,6 +33,8 @@ make
 ./Vkexample_nvg
 ```
 
+*Release* download has example build for Windows and Linux x11/Wayland.
+
 *Hotkeys* - 1 (NanoVG demo hotkey) , 2 (set fps to 30), Space pause.
 
 *Launch option* - `--gpu X` (X is 0/1/2 etc) select Vulkan GPU to use, by default selected Discrete GPU.
