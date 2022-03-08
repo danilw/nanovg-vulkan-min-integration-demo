@@ -48,3 +48,8 @@ ___
 `main.c` - example with integration
 
 `main_original.c` - original single triangle example without NanoVG
+___
+
+# Screenshot:
+
+![img](https://danilw.github.io/GLSL-howto/vulkan_sh_launcher/nvg_integr.png)
