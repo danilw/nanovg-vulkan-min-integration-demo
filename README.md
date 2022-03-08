@@ -18,7 +18,18 @@ As an example of render pass I use my own "single triangle" example Vulkan code 
 
 *Platform supported* - Windows and Linux (X11/Wayland).
 
+# Build:
+
 **Use cmake to build.**
+```
+git clone https://github.com/danilw/nanovg-vulkan-min-integration-demo
+cd nanovg-vulkan-min-integration-demo/example_minimal_nanovg
+mkdir build
+cd build
+cmake ../
+make
+./Vkexample_nvg
+```
 
 *Hotkeys* - 1 (NanoVG demo hotkey) , 2 (set fps to 30), Space pause.
 
