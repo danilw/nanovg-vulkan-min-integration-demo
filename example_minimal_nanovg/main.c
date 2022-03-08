@@ -1,4 +1,12 @@
-// Danil, 2020 Vulkan shader launcher, self https://github.com/danilw/vulkan-shader-launcher
+// Danil, 2022 https://github.com/danilw/nanovg-vulkan-min-integration-demo
+
+// this is NanoVG render pass integration example, code from
+// Vulkan shader launcher https://github.com/danilw/vulkan-shader-launcher
+// nanovg_vulkan https://github.com/danilw/nanovg_vulkan
+
+// Search for "nanovg Vulkan related functions"
+// this blocks can be copy-pasted to any render pass, this is whole NanoVG render pass logic
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +23,25 @@
 #include "../vk_utils/vk_utils.h"
 #include "../vk_utils/vk_render_helper.h"
 #include "../os_utils/utils.h"
+
+
+
+#ifndef DEMO_ANTIALIAS
+#   define DEMO_ANTIALIAS 1
+#endif
+#ifndef DEMO_STENCIL_STROKES
+#   define DEMO_STENCIL_STROKES 1
+#endif
+#ifndef DEMO_VULKAN_VALIDATON_LAYER
+#   define DEMO_VULKAN_VALIDATON_LAYER 0
+#endif
+
+#include "nanovg.h"
+#include "nanovg_vk.h"
+
+#include "nanovg_vulkan/demo.h"
+#include "nanovg_vulkan/perf.h"
+
 
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
 static int resize_size[2] = {1280, 720}; // in Wayland surface should set own size
@@ -94,6 +121,83 @@ static bool on_window_resize(struct vk_physical_device *phy_dev, struct vk_devic
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
 #include "../os_utils/wayland_utils.h"
 #endif
+
+// ----------- nanovg Vulkan related functions
+
+NVGcontext* vg;
+DemoData data;
+PerfGraph fps;
+
+void prepareNVGFrame(struct vk_physical_device *phy_dev, struct vk_device *dev, struct vk_swapchain *swapchain,
+                             struct app_os_window *os_window, uint32_t image_index) {
+
+  VkClearValue clear_values[2];
+  clear_values[0].color.float32[0] = 0.3f;
+  clear_values[0].color.float32[1] = 0.3f;
+  clear_values[0].color.float32[2] = 0.32f;
+  clear_values[0].color.float32[3] = 0.0f;
+  clear_values[1].depthStencil.depth = 1.0f;
+  clear_values[1].depthStencil.stencil = 0;
+
+  VkRenderPassBeginInfo rp_begin;
+  rp_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  rp_begin.pNext = NULL;
+  rp_begin.renderPass = render_data.main_render_pass;
+  rp_begin.framebuffer = render_data.main_gbuffers[image_index].framebuffer;
+  rp_begin.renderArea.offset.x = 0;
+  rp_begin.renderArea.offset.y = 0;
+  rp_begin.renderArea.extent = render_data.main_gbuffers[image_index].surface_size;
+  rp_begin.clearValueCount = 2;
+  rp_begin.pClearValues = clear_values;
+
+  vkCmdBeginRenderPass(essentials.cmd_buffer, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
+
+  VkViewport viewport;
+  viewport.width = (float) os_window->app_data.iResolution[0];
+  viewport.height = (float) os_window->app_data.iResolution[1];
+  viewport.minDepth = (float) 0.0f;
+  viewport.maxDepth = (float) 1.0f;
+  viewport.x = (float) rp_begin.renderArea.offset.x;
+  viewport.y = (float) rp_begin.renderArea.offset.y;
+  vkCmdSetViewport(essentials.cmd_buffer, 0, 1, &viewport);
+
+  VkRect2D scissor = rp_begin.renderArea;
+  vkCmdSetScissor(essentials.cmd_buffer, 0, 1, &scissor);
+}
+
+void submitNVGFrame() {
+  vkCmdEndRenderPass(essentials.cmd_buffer);
+}
+
+void init_nanovg_vulkan(struct vk_physical_device *phy_dev, struct vk_device *dev, struct vk_swapchain *swapchain,
+                             struct app_os_window *os_window, NVGcontext **vg, PerfGraph *fps, DemoData *data){
+  VKNVGCreateInfo create_info = {0};
+  create_info.device = dev->device;
+  create_info.gpu = phy_dev->physical_device;
+  create_info.renderpass = render_data.main_render_pass;
+  create_info.cmdBuffer = essentials.cmd_buffer;
+
+  int flags = 0;
+#ifndef NDEBUG
+  flags |= NVG_DEBUG; // unused in nanovg_vk
+#endif
+#if DEMO_ANTIALIAS
+  flags |= NVG_ANTIALIAS;
+#endif
+#if DEMO_STENCIL_STROKES
+  flags |= NVG_STENCIL_STROKES;
+#endif
+
+  *vg = nvgCreateVk(create_info, flags, dev->command_pools[0].queues[0]);
+  
+  if (loadDemoData(*vg, data) == -1)
+      exit(-1);
+
+  initGraph(fps, GRAPH_RENDER_FPS, "Frame Time");
+}
+
+// -----end of nanovg Vulkan related functions
+
 
 static vk_error allocate_render_data(struct vk_physical_device *phy_dev, struct vk_device *dev,
                                      struct vk_swapchain *swapchain, struct vk_render_essentials *essentials,
@@ -196,7 +300,7 @@ static vk_error allocate_render_data(struct vk_physical_device *phy_dev, struct 
     if(swapchain->surface_format.format!=VK_FORMAT_B8G8R8A8_UNORM)main_image_srgb=true;
     retval = vk_create_graphics_buffers(phy_dev, dev, swapchain->surface_format.format, render_data->main_gbuffers,
                                         essentials->image_count, &render_data->main_render_pass, VK_KEEP,
-                                        VK_WITHOUT_DEPTH);
+                                        VK_WITH_DEPTH);
     if (!vk_error_is_success(&retval))
     {
         vk_error_printf(&retval, "Could not create graphics buffers\n");
@@ -460,11 +564,17 @@ static bool render_loop_draw(struct vk_physical_device *phy_dev, struct vk_devic
     if (res)
         return false;
 
-    VkClearValue clear_values = {
-        .color =
-            {
-                .float32 = {0.0, 0.0, 0.0, 1.0},
-            },
+    VkClearValue clear_values[2] = {
+      [0] = {
+          .color =
+              {
+                  .float32 = {0.0, 0.0, 0.0, 1.0},
+              },
+      },
+      [1] = {
+          .depthStencil={.depth = 1.0f,},
+          .depthStencil={.stencil = 0,},
+      },
     };
     VkRenderPassBeginInfo pass_info = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -479,8 +589,8 @@ static bool render_loop_draw(struct vk_physical_device *phy_dev, struct vk_devic
                     },
                 .extent = render_data.main_gbuffers[image_index].surface_size,
             },
-        .clearValueCount = 1,
-        .pClearValues = &clear_values,
+        .clearValueCount = 2,
+        .pClearValues = clear_values,
     };
 
     vkCmdBeginRenderPass(essentials.cmd_buffer, &pass_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -542,6 +652,27 @@ static bool render_loop_draw(struct vk_physical_device *phy_dev, struct vk_devic
     // vkCmdDrawIndexed(essentials.cmd_buffer, 4, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(essentials.cmd_buffer);
+    
+    
+// ----------- nanovg Vulkan related functions
+    int winWidth = os_window->app_data.iResolution[0];
+    int winHeight = os_window->app_data.iResolution[1];
+    prepareNVGFrame(phy_dev, dev, swapchain, os_window, image_index);
+    
+    updateGraph(&fps, os_window->app_data.iTimeDelta);
+    float pxRatio = (float)os_window->app_data.iResolution[0] / (float)winWidth;
+
+    int mx = os_window->app_data.iMouse[0];
+    int my = os_window->app_data.iResolution[1] - os_window->app_data.iMouse[1];
+  
+    nvgBeginFrame(vg, (float)winWidth, (float)winHeight, pxRatio);
+    renderDemo(vg, (float)mx, (float)my, (float)winWidth, (float)winHeight, (float)os_window->app_data.iTime, (int)os_window->app_data.drawdebug, &data);
+    renderGraph(vg, 5, 5, &fps);
+
+    nvgEndFrame(vg);
+    submitNVGFrame();
+// -----end of nanovg Vulkan related functions
+    
 
     res = vk_render_finish(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, image_index, NULL,
                            NULL);
@@ -887,6 +1018,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
     render_loop_init(&phy_dev, &dev, &swapchain, &os_window);
     
+// ----------- nanovg Vulkan related functions
+    init_nanovg_vulkan(&phy_dev, &dev, &swapchain, &os_window, &vg, &fps, &data);
+// -----end of nanovg Vulkan related functions
+
     done = false;
     while (!done)
     {
@@ -897,6 +1032,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
     exit_cleanup_render_loop(&dev, &essentials, &render_data);
     
+// ----------- nanovg Vulkan related functions
+    freeDemoData(vg, &data);
+    nvgDeleteVk(vg);
+// -----end of nanovg Vulkan related functions
+
     exit_cleanup(vk, &dev, &swapchain, &os_window);
 
     return (int)msg.wParam;
@@ -1009,6 +1149,10 @@ int main(int argc, char **argv)
 
     render_loop_init(&phy_dev, &dev, &swapchain, &os_window);
     
+// ----------- nanovg Vulkan related functions
+    init_nanovg_vulkan(&phy_dev, &dev, &swapchain, &os_window, &vg, &fps, &data);
+// -----end of nanovg Vulkan related functions
+    
 #if defined(VK_USE_PLATFORM_XCB_KHR)
     render_loop_xcb(&phy_dev, &dev, &swapchain, &os_window);
 #else
@@ -1018,6 +1162,11 @@ int main(int argc, char **argv)
 
     retval = 0;
     
+// ----------- nanovg Vulkan related functions
+    freeDemoData(vg, &data);
+    nvgDeleteVk(vg);
+// -----end of nanovg Vulkan related functions
+
     exit_cleanup(vk, &dev, &swapchain, &os_window);
     return retval;
 }

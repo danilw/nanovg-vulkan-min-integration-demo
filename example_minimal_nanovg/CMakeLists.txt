@@ -5,6 +5,14 @@ project("example_minimal")
 OPTION(USE_WAYLAND_LINUX "use Wayland for Linux" OFF)
 OPTION(GEN_WAYLAND_HEADERS "using wayland-scanner" OFF)
 
+OPTION(DEMO_ANTIALIAS "Use NVG_ANTIALIAS" ON)
+OPTION(DEMO_MSAA "Use MSAA instead of NVG_ANTIALIAS" OFF)
+OPTION(DEMO_STENCIL_STROKES "NVG_STENCIL_STROKES" ON)
+
+add_compile_definitions(DEMO_MSAA=$<BOOL:${DEMO_MSAA}>)
+add_compile_definitions(DEMO_ANTIALIAS=$<BOOL:${DEMO_ANTIALIAS}>)
+add_compile_definitions(DEMO_STENCIL_STROKES=$<BOOL:${DEMO_STENCIL_STROKES}>)
+
 find_package(Vulkan REQUIRED)
 if(NOT Vulkan_FOUND)
     MESSAGE("ERROR: Vulkan not found")
@@ -55,30 +63,40 @@ set(SOURCES
   "../vk_utils/vk_utils.c"
   "../vk_utils/vk_error_print.c"
   "../vk_utils/vk_render_helper.c"
+  "nanovg_vulkan/src/nanovg.c"
+  "nanovg_vulkan/demo.c"
+  "nanovg_vulkan/perf.c"
   ${Wayland_client}
 )
 
 add_executable(
-    Vkexample
+    Vkexample_nvg
     ${SOURCES} 
 )
 
+include_directories("nanovg_vulkan/src")
 
-add_custom_command(TARGET Vkexample POST_BUILD
+add_custom_command(TARGET Vkexample_nvg POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${CMAKE_SOURCE_DIR}/shaders/spv $<TARGET_FILE_DIR:Vkexample>/shaders/spv)
+                    ${CMAKE_SOURCE_DIR}/shaders/spv $<TARGET_FILE_DIR:Vkexample_nvg>/shaders/spv)
+add_custom_command(TARGET Vkexample_nvg POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${CMAKE_SOURCE_DIR}/nanovg_vulkan_resources/font $<TARGET_FILE_DIR:Vkexample_nvg>/nanovg_vulkan_resources/font)
+add_custom_command(TARGET Vkexample_nvg POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${CMAKE_SOURCE_DIR}/nanovg_vulkan_resources/images $<TARGET_FILE_DIR:Vkexample_nvg>/nanovg_vulkan_resources/images)
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
 
-  add_definitions(-DVK_USE_PLATFORM_WIN32_KHR )
-  target_link_libraries(Vkexample ${Vulkan_LIBRARY})
+  add_definitions(-DVK_USE_PLATFORM_WIN32_KHR -DNANOVG_VULKAN_IMPLEMENTATION)
+  target_link_libraries(Vkexample_nvg ${Vulkan_LIBRARY})
 elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
   if(USE_WAYLAND_LINUX)
-    add_definitions(-DVK_USE_PLATFORM_WAYLAND_KHR -O2 -s -fdata-sections -ffunction-sections -Wl,--gc-sections)
-    target_link_libraries(Vkexample m wayland-client ${Vulkan_LIBRARY})
+    add_definitions(-DVK_USE_PLATFORM_WAYLAND_KHR -DNANOVG_VULKAN_IMPLEMENTATION -O2 -s -fdata-sections -ffunction-sections -Wl,--gc-sections)
+    target_link_libraries(Vkexample_nvg m wayland-client ${Vulkan_LIBRARY})
   else()
-    add_definitions(-DVK_USE_PLATFORM_XCB_KHR -O2 -s -fdata-sections -ffunction-sections -Wl,--gc-sections)
-    target_link_libraries(Vkexample m xcb ${Vulkan_LIBRARY})
+    add_definitions(-DVK_USE_PLATFORM_XCB_KHR -DNANOVG_VULKAN_IMPLEMENTATION -O2 -s -fdata-sections -ffunction-sections -Wl,--gc-sections)
+    target_link_libraries(Vkexample_nvg m xcb ${Vulkan_LIBRARY})
   endif()
 else()
   message(WARNING "Unknown compiler '${CMAKE_C_COMPILER_ID}'!")
