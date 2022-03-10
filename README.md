@@ -9,9 +9,9 @@ NanoVG Vulkan port github link - [nanovg_vulkan](https://github.com/danilw/nanov
 ### Contact: [**Join discord server**](https://discord.gg/JKyqWgt)
 ___
 
-*What you need to do for NanoVG integration* - call `init_nanovg_vulkan(...)` after your full Vulkan initialization, and copy-paste NanoVG render pass after end of your render pass `vkCmdEndRenderPass`.
+*What you need to do for NanoVG integration* - call `init_nanovg_vulkan(...)` after your full Vulkan initialization, and copy-paste NanoVG render pass after end of your render pass `vkCmdEndRenderPass`. Remember to use `VK_ATTACHMENT_LOAD_OP_LOAD` for loadOp in VkAttachmentDescription for color(line 1346 vk_utils/vk_utils.c). And clean framebuffer before next frame.
 
-### This commit [11e4dce](https://github.com/danilw/nanovg-vulkan-min-integration-demo/commit/11e4dceb1acb1b31c19c3c16c7f365f47a42184d) shows NanoVG render pass integration
+### This commit [11e4dce](https://github.com/danilw/nanovg-vulkan-min-integration-demo/commit/11e4dceb1acb1b31c19c3c16c7f365f47a42184d) shows NanoVG render pass integration. And remember to clean framebuffer if you integrating render pass commit [b81f66a](https://github.com/danilw/nanovg-vulkan-min-integration-demo/commit/b81f66ab63276f50de320dae445bdde362acaffe).
 
 Can be copy-pasted to any other render pass. (or compare `main.c` to `main_original.c`)
 ___
