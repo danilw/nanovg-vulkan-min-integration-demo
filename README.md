@@ -1,6 +1,6 @@
 # nanovg-vulkan-min-integration-demo
 
-**What is it** - this project show Vulkan NanoVG integration to custom render pass. 
+**What is it** - this project show Vulkan NanoVG integration to custom render pass, not using any external libraries. 
 
 NanoVG Vulkan port github link - [nanovg_vulkan](https://github.com/danilw/nanovg_vulkan)
 
