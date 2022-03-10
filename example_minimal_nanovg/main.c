@@ -564,6 +564,70 @@ static bool render_loop_draw(struct vk_physical_device *phy_dev, struct vk_devic
     if (res)
         return false;
 
+{
+  VkImageMemoryBarrier image_barrier = {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    .dstAccessMask = 0,
+    .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .image = essentials.images[image_index],
+    .subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+    },
+  };
+  vkCmdPipelineBarrier(essentials.cmd_buffer,
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+    0,
+    0, NULL,
+    0, NULL,
+    1, &image_barrier);
+}
+{
+  VkClearColorValue clear_values = { 0.0, 0.0, 0.0, 0.0 };
+  VkImageSubresourceRange ImageSubresourceRange;
+  ImageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+  ImageSubresourceRange.baseMipLevel   = 0;
+  ImageSubresourceRange.levelCount     = 1;
+  ImageSubresourceRange.baseArrayLayer = 0;
+  ImageSubresourceRange.layerCount     = 1;
+  vkCmdClearColorImage(essentials.cmd_buffer,essentials.images[image_index],VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clear_values,1,&ImageSubresourceRange);
+}
+{
+  VkImageMemoryBarrier image_barrier = {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    .dstAccessMask = 0,
+    .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .image = essentials.images[image_index],
+    .subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+    },
+    };
+  vkCmdPipelineBarrier(essentials.cmd_buffer,
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+    0,
+    0, NULL,
+    0, NULL,
+    1, &image_barrier);
+
+}
+
     VkClearValue clear_values[2] = {
       [0] = {
           .color =

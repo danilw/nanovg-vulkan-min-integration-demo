@@ -599,7 +599,7 @@ vk_error vk_get_swapchain(VkInstance vk, struct vk_physical_device *phy_dev, str
             .height = swapchainExtent.height,
         },
         .imageArrayLayers = 1,
-        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
         //.queueFamilyIndexCount = >0,
         //.pQueueFamilyIndices = not null,
