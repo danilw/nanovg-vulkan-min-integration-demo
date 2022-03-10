@@ -980,7 +980,7 @@ VkFormat vk_get_supported_depth_stencil_format(struct vk_physical_device *phy_de
         if ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT))
         {
             selected_format = depth_formats[i];
-            break;
+            if(selected_format == VK_FORMAT_D32_SFLOAT_S8_UINT || selected_format == VK_FORMAT_D24_UNORM_S8_UINT)break;//hasStencilComponent
         }
     }
 
