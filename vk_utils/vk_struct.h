@@ -215,6 +215,7 @@ struct app_os_window {
     bool resize_event; //window controled events
     
     bool fps_lock; //key pressed event
+        bool hidenvg; //nvg example
     
     bool reload_shaders_on_resize; //launch option
     bool print_debug; //launch option
