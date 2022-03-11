@@ -719,7 +719,7 @@ static bool render_loop_draw(struct vk_physical_device *phy_dev, struct vk_devic
 
     vkCmdEndRenderPass(essentials.cmd_buffer);
     
-    
+    if(!os_window->hidenvg){
 // ----------- nanovg Vulkan related functions
     int winWidth = os_window->app_data.iResolution[0];
     int winHeight = os_window->app_data.iResolution[1];
@@ -738,7 +738,7 @@ static bool render_loop_draw(struct vk_physical_device *phy_dev, struct vk_devic
     nvgEndFrame(vg);
     submitNVGFrame();
 // -----end of nanovg Vulkan related functions
-    
+    }
 
     res = vk_render_finish(&essentials, dev, swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, image_index, NULL,
                            NULL);
@@ -791,6 +791,7 @@ void init_win_params(struct app_os_window *os_window)
     os_window->resize_event = false;
     os_window->reload_shaders_on_resize = false;
     os_window->print_debug = false;
+    os_window->hidenvg = false;
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     os_window->connection = NULL;
     os_window->window = NULL;

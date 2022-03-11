@@ -42,6 +42,9 @@ static void app_handle_xcb_event(struct app_os_window *os_window, const xcb_gene
         case 0xb: //2
             os_window->fps_lock = !os_window->fps_lock;
             break;
+        case 0xc: //3
+            os_window->hidenvg = !os_window->hidenvg;
+            break;
         }
     } break;
     case XCB_MOTION_NOTIFY: {
