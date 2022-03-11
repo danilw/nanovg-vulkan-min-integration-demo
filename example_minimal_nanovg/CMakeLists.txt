@@ -90,6 +90,8 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
 
   add_definitions(-DVK_USE_PLATFORM_WIN32_KHR -DNANOVG_VULKAN_IMPLEMENTATION)
   target_link_libraries(Vkexample_nvg ${Vulkan_LIBRARY})
+  # let Visual Studio debugger find the shader files
+  set_target_properties(Vkexample_nvg PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
   if(USE_WAYLAND_LINUX)
     add_definitions(-DVK_USE_PLATFORM_WAYLAND_KHR -DNANOVG_VULKAN_IMPLEMENTATION -O2 -s -fdata-sections -ffunction-sections -Wl,--gc-sections)
