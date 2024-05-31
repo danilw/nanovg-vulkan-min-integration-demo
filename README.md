@@ -1,3 +1,9 @@
+### Note 2024:
+
+**This is old**, before https://github.com/danilw/nanovg_vulkan/pull/7 in nanovg_vulkan repo. Im not going to update this to new.
+
+___
+
 # nanovg-vulkan-min-integration-demo
 
 **What is it** - this project show Vulkan NanoVG integration to custom render pass, not using any external libraries. 
