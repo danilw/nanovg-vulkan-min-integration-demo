@@ -11,8 +11,6 @@ ___
 NanoVG Vulkan port github link - [nanovg_vulkan](https://github.com/danilw/nanovg_vulkan)
 
 ### Remember this is not GUI example, NanoVG is UI rendering library
-
-### Contact: [**Join discord server**](https://discord.gg/JKyqWgt)
 ___
 
 *What you need to do for NanoVG integration* - call `init_nanovg_vulkan(...)` after your full Vulkan initialization, and copy-paste NanoVG render pass after end of your render pass `vkCmdEndRenderPass`. Remember to use `VK_ATTACHMENT_LOAD_OP_LOAD` for loadOp in VkAttachmentDescription for color attachment of renderpass(line 1346 vk_utils/vk_utils.c). And clean framebuffer before next frame.
